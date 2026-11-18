@@ -1,0 +1,12 @@
+{
+  "name": "coy-discovery-app",
+  "version": "1.0.0",
+  "description": "Swipe-based Discover tab for app.getcoy.com",
+  "scripts": {
+    "build": "node frontend/build.js",
+    "start": "node backend/src/server.js"
+  },
+  "keywords": ["coy", "discovery", "swipe", "react", "node"],
+  "author": "",
+  "license": "MIT"
+}

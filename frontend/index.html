@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
+  <title>Coy — Discover</title>
+  <meta name="description" content="Swipe-based discovery on Coy. Mutual likes, genuine connections." />
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/bundle.css" onerror="this.remove()">
+  <style>
+    /* Inline spinner while bundle loads */
+    #root:empty {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      height: 100vh;
+      background: #07080B;
+      color: #FE3C72;
+      font-family: 'Plus Jakarta Sans', sans-serif;
+    }
+    #root:empty::after {
+      content: "Loading Coy...";
+      font-weight: 700;
+      font-size: 18px;
+      letter-spacing: -0.3px;
+    }
+  </style>
+</head>
+<body>
+  <div id="root"></div>
+  <script src="/bundle.js"></script>
+</body>
+</html>
