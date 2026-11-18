@@ -1,11 +1,11 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import TopNav from './components/TopNav';
-import TabBar from './components/TabBar';
 import DiscoverTab from './components/DiscoverTab';
 import MatchesTab from './components/MatchesTab';
 import HomeTab from './components/HomeTab';
 import MatchModal from './components/MatchModal';
 import ChatModal from './components/ChatModal';
+import { Home, Compass, MessageCircleHeart } from 'lucide-react';
 
 // Determine API base url (if frontend running on port 3000, call backend on 5000)
 const getApiBase = () => {
@@ -24,22 +24,14 @@ export default function App() {
   const [isLoadingFeed, setIsLoadingFeed] = useState(true);
   const [isResetting, setIsResetting] = useState(false);
   const [currentMatchModal, setCurrentMatchModal] = useState(null);
-  const [activeChatProfile, setActiveChatProfile] = useState(null);
-  
-  // Default to desktop view on wide screens (>= 768px), mobile on small
-  const [viewMode, setViewMode] = useState(() => {
-    if (typeof window !== 'undefined' && window.innerWidth >= 768) {
-      return 'desktop';
-    }
-    return 'mobile';
-  });
+  const [activeMobileChatProfile, setActiveMobileChatProfile] = useState(null);
 
   const currentUser = {
     name: "Alex, 24",
     avatar: "https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?auto=format&fit=crop&w=300&q=80"
   };
 
-  // Keyboard navigation for desktop users (← Pass, → Like, ↑ Superlike, Esc Close)
+  // Keyboard navigation for desktop web users (← Pass, → Like, ↑ Superlike, Esc Close)
   useEffect(() => {
     const handleKeyDown = (e) => {
       // Don't trigger shortcuts if user is typing in chat input
@@ -47,11 +39,11 @@ export default function App() {
 
       if (e.key === 'Escape') {
         if (currentMatchModal) setCurrentMatchModal(null);
-        if (activeChatProfile) setActiveChatProfile(null);
+        if (activeMobileChatProfile) setActiveMobileChatProfile(null);
         return;
       }
 
-      if (activeTab === 'discover' && feed.length > 0 && !currentMatchModal && !activeChatProfile) {
+      if (activeTab === 'discover' && feed.length > 0 && !currentMatchModal && !activeMobileChatProfile) {
         const topProfile = feed[0];
         if (e.key === 'ArrowLeft') {
           e.preventDefault();
@@ -68,7 +60,7 @@ export default function App() {
 
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [activeTab, feed, currentMatchModal, activeChatProfile]);
+  }, [activeTab, feed, currentMatchModal, activeMobileChatProfile]);
 
   // Fetch feed (unswiped profiles)
   const fetchFeed = useCallback(async () => {
@@ -158,26 +150,27 @@ export default function App() {
   // Match modal CTA: Send Message
   const handleSendMessageFromMatch = (profile) => {
     setCurrentMatchModal(null);
-    setActiveChatProfile(profile);
-  };
-
-  const toggleViewMode = () => {
-    setViewMode(prev => prev === 'desktop' ? 'mobile' : 'desktop');
+    if (window.innerWidth < 768) {
+      setActiveMobileChatProfile(profile);
+    } else {
+      setActiveTab('matches');
+    }
   };
 
   return (
-    <div className={`app-container ${viewMode === 'desktop' ? 'desktop-layout' : 'mobile-frame'}`}>
-      {/* Top Header */}
+    <div className="web-app-shell">
+      {/* Top Web Header Navbar (Full Width) */}
       <TopNav
+        activeTab={activeTab}
+        onSelectTab={setActiveTab}
+        matchCount={matches.length}
         onReset={handleReset}
         isResetting={isResetting}
         user={currentUser}
-        viewMode={viewMode}
-        onToggleViewMode={toggleViewMode}
       />
 
-      {/* Main Tab Screen */}
-      <main className="main-content">
+      {/* Main Web Workspace */}
+      <div className="web-main-workspace">
         {activeTab === 'home' && (
           <HomeTab onGoToDiscover={() => setActiveTab('discover')} />
         )}
@@ -185,11 +178,19 @@ export default function App() {
         {activeTab === 'discover' && (
           <DiscoverTab
             feed={feed}
+            matches={matches}
             isLoading={isLoadingFeed}
             onSwipe={handleSwipe}
             onReset={handleReset}
             matchCount={matches.length}
             onViewMatches={() => setActiveTab('matches')}
+            onOpenChat={(profile) => {
+              if (window.innerWidth < 768) {
+                setActiveMobileChatProfile(profile);
+              } else {
+                setActiveTab('matches');
+              }
+            }}
           />
         )}
 
@@ -199,14 +200,34 @@ export default function App() {
             onGoToDiscover={() => setActiveTab('discover')}
           />
         )}
-      </main>
+      </div>
 
-      {/* Bottom Tab Bar */}
-      <TabBar
-        activeTab={activeTab}
-        onSelectTab={setActiveTab}
-        matchCount={matches.length}
-      />
+      {/* Mobile Bottom Tab Bar (Appears on screens < 768px for thumbs navigation) */}
+      <nav className="mobile-bottom-tabs" aria-label="Mobile Navigation">
+        <button
+          className={`tab-item ${activeTab === 'home' ? 'active' : ''}`}
+          onClick={() => setActiveTab('home')}
+        >
+          <Home size={22} />
+          <span className="tab-label">Home</span>
+        </button>
+
+        <button
+          className={`tab-item ${activeTab === 'discover' ? 'active' : ''}`}
+          onClick={() => setActiveTab('discover')}
+        >
+          <Compass size={24} />
+          <span className="tab-label">Discover</span>
+        </button>
+
+        <button
+          className={`tab-item ${activeTab === 'matches' ? 'active' : ''}`}
+          onClick={() => setActiveTab('matches')}
+        >
+          <MessageCircleHeart size={22} />
+          <span className="tab-label">Matches {matches.length > 0 ? `(${matches.length})` : ''}</span>
+        </button>
+      </nav>
 
       {/* Match Celebration Modal */}
       {currentMatchModal && (
@@ -218,11 +239,11 @@ export default function App() {
         />
       )}
 
-      {/* Chat Drawer if opened from Match modal */}
-      {activeChatProfile && (
+      {/* Mobile Chat Drawer if triggered on small screens */}
+      {activeMobileChatProfile && (
         <ChatModal
-          profile={activeChatProfile}
-          onClose={() => setActiveChatProfile(null)}
+          profile={activeMobileChatProfile}
+          onClose={() => setActiveMobileChatProfile(null)}
         />
       )}
     </div>
